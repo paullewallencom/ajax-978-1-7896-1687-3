@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AJAX with Node Express Server</title>
+    <style>
+        .btn, .editBtn  {
+            border: 1px solid black;
+            padding: 5px;
+            display: inline-block
+        }
+        
+        .editBtn {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Hello, world!</h1>
+    <ul id="usersList"></ul>
+    <form id="myform">
+        <input type="text" name="user" placeholder="User Name">
+        <input type="text" name="pass" placeholder="Password">
+        <input type="text" name="id" placeholder="id"> </form>
+    <div class="btn">Click Me</div>
+    <div class="editBtn">Save</div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            buildPage();
+        })
+        $('#usersList').on('click', '.remove', function () {
+            var id = $(this).parent().data('user').id;
+            $.ajax({
+                url: '/users/' + id
+                , type: 'DELETE'
+                , success: function (rep) {
+                    console.log(rep);
+                    buildPage();
+                }
+            })
+        })
+        $('#usersList').on('click', '.edit', function () {
+            var user = $(this).parent().data('user');
+            $('input[name="id"]').val(user.id);
+            $('input[name="user"]').val(user.user);
+            $('input[name="pass"]').val(user.pass);
+            $('.editBtn').show();
+        })
+        $('.editBtn').click(function () {
+            var id = $('input[name="id"]').val()
+            $.ajax({
+                url: '/users/' + id
+                , type: 'PUT'
+                , data: $('#myform').serialize()
+                , success: function (rep) {
+                    console.log(rep);
+                    buildPage();
+                }
+            })
+            $('.editBtn').hide();
+            $('input[name="id"]').val('');
+        })
+        $('.btn').click(function () {
+            var user = $('input[name="user"]').val();
+            var pass = $('input[name="pass"]').val();
+            $.post('/users', $('#myform').serialize()).done(function (data) {
+                console.log(data);
+                buildPage();
+            })
+        })
+
+        function buildPage() {
+            $('#usersList').html(' ');
+            $.getJSON('/users', function (data) {
+                $.each(data.users, function (i, value) {
+                    var hLink = '<a href="/users/' + value.id + '" target="_blank">' + value.id + '</a>';
+                    var listNew = $('<li>' + value.user + ' ' + hLink + ' <span class="remove">x</span> <span class="edit">edit</span></li>');
+                    listNew.data('user', value);
+
+                    $('#usersList').append(listNew);
+                    console.log(value);
+                })
+            })
+        }
+    </script>
+</body>
+
+</html>

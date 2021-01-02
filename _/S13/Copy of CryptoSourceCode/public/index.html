@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <title>Cyrpto Currency Prices</title>
+</head>
+
+<body>
+    <div>
+        <input id="currencyTags">
+        <button id="requestRate">See Rate</button>
+        <div id="output1"></div>
+    </div>
+    <div>
+        <select id="selCurrency">
+            <option value="USD">USD</option>
+        </select>
+        <button id="allRates">See All</button>
+        <ul id="output"></ul>
+    </div>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        //https://jqueryui.com/autocomplete/
+        //https://api.coinmarketcap.com/v1/ticker/
+        //https://api.coinmarketcap.com/v1/ticker/?convert=EUR
+        $(function () {
+            $.get('/load/', function (data) {
+                $('#currencyTags').autocomplete({
+                    source: data
+                })
+            })
+        })
+        const allRates = document.querySelector('#allRates');
+        const requestRate = document.querySelector('#requestRate');
+        const currencyTags = document.querySelector('#currencyTags');
+        const selCurrency = document.querySelector('#selCurrency');
+        const output = document.querySelector('#output');
+        const output1 = document.querySelector('#output1');
+        //const url = 'https://api.coinmarketcap.com/v1/ticker/';
+        const cur = ["AUD", "BRL", "CAD", "CHF", "CLP", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PKR", "PLN", "RUB", "SEK", "SGD", "THB", "TRY", "TWD", "ZAR"];
+        for (var i = 0; i < cur.length; i++) {
+            var option = document.createElement('option')
+                , txt = document.createTextNode(cur[i])
+            option.appendChild(txt);
+            option.setAttribute('value', cur[i]);
+            selCurrency.insertBefore(option, selCurrency.lastChild);
+        }
+        allRates.addEventListener('click', getAllRates);
+        requestRate.addEventListener('click', getOneRate);
+
+        function getOneRate() {
+            let curValue = currencyTags.value;
+            let urlPlus = 'cyrpto/' + curValue;
+            fetch(urlPlus).then(function (response) {
+                return response.json()
+            }).then(function (data) {
+                outputOneCur(JSON.parse(data)[0]);
+            }).catch(function (error) {
+                console.log(JSON.stringify(error));
+            });
+            console.log(urlPlus);
+        }
+
+        function outputOneCur(data) {
+            console.log(data);
+            let html = '<h1>' + data.name + '</h1>';
+            for (key in data) {
+                let keyContent = key.replace("_", " ").capitalize();
+                let val = data[key];
+                html += '<div>' + keyContent + ' : ' + val + '</div>';
+            }
+            output1.innerHTML = html;
+        }
+
+        function getAllRates() {
+            let curValue = selCurrency.value;
+            let url = '/price/' + curValue;
+            fetch(url).then(function (response) {
+                return response.json()
+            }).then(function (data) {
+                outputToPage(JSON.parse(data), curValue);
+            }).catch(function (error) {
+                console.log(JSON.stringify(error));
+            });
+        }
+
+        function outputToPage(data, c) {
+            output.innerHTML = '';
+            let currencyLower = 'price_' + c.toLowerCase();
+            data.forEach(function (item, i) {
+                //name .price_usd symbol
+                let priceFixed = (Math.round(item[currencyLower] * 100) / 100);
+                let li = document.createElement('li');
+                let span = document.createElement('span');
+                span.innerHTML = `${item.name} ${item.symbol} ${priceFixed} ${c}`;
+                li.appendChild(span);
+                output.appendChild(li);
+                //console.log(item);   
+            })
+        }
+        String.prototype.capitalize = function () {
+            return this.charAt(0).toUpperCase() + this.slice(1);
+        }
+    </script>
+</body>
+
+</html>

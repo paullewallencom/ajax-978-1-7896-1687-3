@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> Tweet Objects from Node</title>
+    <style>
+        #output {
+            font-size: 1.4em;
+            list-style: none;
+        }
+        
+        #output li {
+            display: block;
+            color: #222;
+            background-color: white;
+            line-height: 30px;
+            border-bottom: solid 1px #CCCCCC;
+            padding-left: 10px;
+            cursor: pointer;
+        }
+        
+        #output li a {
+            color: #222;
+            text-decoration: none;
+        }
+        
+        #output li:hover {
+            background-color: #ddd;
+        }
+        
+        #output li span {
+            color: #666;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="mesSender">
+        <textarea id="newMessage" rows="4" ></textarea>
+        <br>
+        <button type="submit">Post of Twitter</button>
+    </form>
+    
+    <input type="text" id="search" value="" placeholder="Search Term">
+    <button id="getTweets">Search Tweets</button>
+    <ul id="output"></ul>
+    <script>
+        const search = document.getElementById('search');
+        const getTweets = document.getElementById('getTweets');
+        const output = document.getElementById('output');
+        const mesSender = document.getElementById('mesSender');
+        
+        mesSender.addEventListener('submit',addComment);
+        getTweets.addEventListener('click', getAllTweets);
+
+        function addComment(){
+            event.preventDefault();
+            let newTweetComment = {"comment":document.getElementById('newMessage').value}
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", '/comment/' , true);
+            xhr.setRequestHeader('Content-Type','application/json;charset=UTF-8');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState != 4 || xhr.status != 200) return;
+                console.log(xhr.responseText);
+            }
+            xhr.send(JSON.stringify(newTweetComment));
+        }
+        
+        
+        function getAllTweets() {
+            const url = '/tweets/' + search.value;
+            fetch(url).then(function (response) {
+                return response.json()
+            }).then(function (data) {
+                outputTweets(data.statuses)
+            }).catch(function (error) {
+                console.log(JSON.stringify(error));
+            })
+        }
+
+        function outputTweets(data) {
+            output.innerHTML = ' ';
+            data.forEach(function (item, i) {
+                console.log(item);
+                let hyper = `<a href="https://twitter.com/i/web/status/${item.id_str}" target="_blank">${item.text}</a>`;
+                let li = document.createElement('li');
+                let span = document.createElement('span');
+                span.innerHTML = `${hyper} <small>${item.user.name}</small> ♥ ${item.retweet_count}`;
+                li.appendChild(span);
+                output.appendChild(li);
+            })
+        }
+    </script>
+</body>
+
+</html>
